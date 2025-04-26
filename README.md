@@ -22,3 +22,6 @@ AFAIK, any available version of that DLL should work but for reference, this is 
 layle@pwn:/mnt/c/Program Files (x86)/LEGO Media/Games/Rock Raiders$ sha256sum d3drm_ori.dll
 5932f4728c5220ff5e2e5c32573f7033e351005c4fe81a42a20b5025003cba7b  d3drm_ori.dll
 ```
+
+## Random Note
+The game hates it if you change anything in the .text section(?). Use hardware breakpoints.
