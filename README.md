@@ -1,4 +1,4 @@
-# Lego Rock Raiders NOCD Crack (Russian Version)
+# Lego Rock Raiders NO-CD Crack (Russian Version)
 Apparently the Russian version of Lego Rock Raiders is slightly different compared to the other versions (see below). I ended up writing this NO-CD crack as the group called "Research Realm" that aims to preserve Lego's history needed help with it.
 
 ## What's the issue with this version?
