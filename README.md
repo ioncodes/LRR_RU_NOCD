@@ -24,7 +24,7 @@ layle@pwn:/mnt/c/Program Files (x86)/LEGO Media/Games/Rock Raiders$ sha256sum d3
 ```
 
 ## Screenshot
-![image](https://github.com/user-attachments/assets/1caf4694-e534-47dd-9013-02660fbb4aa8)
+![image](https://github.com/user-attachments/assets/5e789a35-d98d-4d52-a258-c0699e65050d)
 
 
 ## Random Note
