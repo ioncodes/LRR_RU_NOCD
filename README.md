@@ -14,7 +14,7 @@ It's fairly simple really! The game goes through the following steps:
 There is a check for a CD key (using the file `cd.key`) but it looks like that it doesn't do anything with it.
 
 ## How does this patch work?
-Since the game uses `d3drm.dll` I decided to implement patches inside of a proxy DLL (this project). The DLL hooks `GetDriveTypeA` and `GetVolumeInformationA` and forces overwrites the required information to reach the desired result.
+Since the game uses `d3drm.dll` I decided to implement patches inside of a proxy DLL (this project). The DLL hooks `GetDriveTypeA` and `GetVolumeInformationA` and overwrites the required information to reach the desired result.
 The DLL must be placed in the Rock Raiders installation folder along with a copy of the legitimate `d3drm.dll` but renamed as `d3drm_ori.dll`.
 AFAIK, any available version of that DLL should work but for reference, this is the hash of the one I used:
 
