@@ -54,7 +54,6 @@ BOOL WINAPI GetVolumeInformationA_hk(
 	std::cout << "GetVolumeInformationA(...) -> " << result << std::endl;
 	std::cout << "  lpRootPathName: " << lpRootPathName << std::endl;
 
-
 	if (strcmp(lpRootPathName, "_:\\") == 0)
 	{
 		// Spoof the volume name and file system name, the russian version for some reason only checks this.
@@ -90,10 +89,12 @@ BOOL WINAPI GetDriveTypeA_hk(LPCSTR lpRootPathName)
 
 VOID InstallHooks()
 {
+#ifdef _DEBUG
 	AllocConsole();
 	FILE* fp;
 	freopen_s(&fp, "CONOUT$", "w", stdout);
 	freopen_s(&fp, "CONOUT$", "w", stderr);
+#endif
 
     if (MH_Initialize() != MH_OK)
         std::cout << "Failed to initialize MinHook" << std::endl;
