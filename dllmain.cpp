@@ -1,5 +1,6 @@
 #include <Windows.h>
 #include <iostream>
+#include "MinHook.h"
 
 #pragma comment(linker, "/export:D3DRMColorGetAlpha=d3drm_ori.D3DRMColorGetAlpha,@1")
 #pragma comment(linker, "/export:D3DRMColorGetBlue=d3drm_ori.D3DRMColorGetBlue,@2")
@@ -91,54 +92,6 @@ BOOL WINAPI GetDriveTypeA_hk(LPCSTR lpRootPathName)
 	return result;
 }
 
-void* CreateTrampoline(void* targetFunction, size_t stolenLength)
-{
-    void* trampoline = VirtualAlloc(nullptr, stolenLength + 5, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
-    if (!trampoline)
-        return nullptr;
-
-    memcpy(trampoline, targetFunction, stolenLength);
-
-    BYTE* jumpBack = (BYTE*)trampoline + stolenLength;
-    intptr_t relAddr = ((BYTE*)targetFunction + stolenLength) - (jumpBack + 5);
-    jumpBack[0] = 0xE9; // JMP
-    *(intptr_t*)(jumpBack + 1) = relAddr;
-
-    return trampoline;
-}
-
-bool HookFunction(const char* moduleName, const char* functionName, void** originalFunctionOut, void* hookFunction)
-{
-    HMODULE hMod = GetModuleHandleA(moduleName);
-    if (!hMod)
-        return false;
-
-    void* targetFunction = GetProcAddress(hMod, functionName);
-        return false;
-
-    void* trampoline = CreateTrampoline(targetFunction, 12);
-    if (!trampoline)
-        return false;
-
-    if (originalFunctionOut)
-        *originalFunctionOut = trampoline;
-
-    DWORD oldProtect;
-    VirtualProtect(targetFunction, 12, PAGE_EXECUTE_READWRITE, &oldProtect);
-
-    BYTE patch[12] = { 0 };
-    patch[0] = 0xE9;
-    intptr_t relAddr = (BYTE*)hookFunction - (BYTE*)targetFunction - 5;
-    *(intptr_t*)(patch + 1) = relAddr;
-    memset(patch + 5, 0x90, 7); // NOP padding
-
-    memcpy(targetFunction, patch, 12);
-
-    VirtualProtect(targetFunction, 12, oldProtect, &oldProtect);
-
-    return true;
-}
-
 VOID InstallHooks()
 {
 	AllocConsole();
@@ -146,8 +99,25 @@ VOID InstallHooks()
 	freopen_s(&fp, "CONOUT$", "w", stdout);
 	freopen_s(&fp, "CONOUT$", "w", stderr);
 
-	HookFunction("kernel32.dll", "GetVolumeInformationA", (void**)&g_OriginalGetVolumeInformationA, (void*)GetVolumeInformationA_hk);
-	HookFunction("kernel32.dll", "GetDriveTypeA", (void**)&g_OriginalGetDriveTypeA, (void*)GetDriveTypeA_hk);
+    if (MH_Initialize() != MH_OK)
+        std::cout << "Failed to initialize MinHook" << std::endl;
+
+	if (MH_CreateHookApi(
+		L"kernel32.dll",
+		"GetVolumeInformationA",
+		GetVolumeInformationA_hk,
+		reinterpret_cast<LPVOID*>(&g_OriginalGetVolumeInformationA)
+	) != MH_OK)
+		std::cout << "Failed to create hook for GetVolumeInformationA" << std::endl;
+	if (MH_CreateHookApi(
+		L"kernel32.dll",
+		"GetDriveTypeA",
+		GetDriveTypeA_hk,
+		reinterpret_cast<LPVOID*>(&g_OriginalGetDriveTypeA)
+	) != MH_OK)
+		std::cout << "Failed to create hook for GetDriveTypeA" << std::endl;
+
+	MH_EnableHook(MH_ALL_HOOKS);
 }
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved)
