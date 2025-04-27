@@ -87,7 +87,29 @@ BOOL WINAPI GetDriveTypeA_hk(LPCSTR lpRootPathName)
 	return result;
 }
 
-VOID InstallHooks()
+VOID NopChecksumCheck(BYTE* pAddress, size_t size)
+{
+	/*
+		ANTIDEBUG/ANTIPATCH (rough estimation):
+		for (int i = 0; i < 0x000771E4; i++) {
+			checksum += *(DWORD*)(0x401000 + i);
+		}
+		checksum -= KNOWN_VALUE;
+		[ESP] -= checksum;
+
+		[ESP] -> points to next function call, will break if checksum isn't 0
+
+		pattern: 2B 42 04 29 04 24 33 C0 64 89 00
+	*/
+
+	DWORD oldProtect;
+	VirtualProtect(pAddress, size, PAGE_EXECUTE_READWRITE, &oldProtect);
+	for (size_t i = 0; i < size; ++i)
+		pAddress[i] = 0x90; // NOP
+	VirtualProtect(pAddress, size, oldProtect, &oldProtect);
+}
+
+VOID ApplyPatches()
 {
 #ifdef _DEBUG
 	AllocConsole();
@@ -95,6 +117,8 @@ VOID InstallHooks()
 	freopen_s(&fp, "CONOUT$", "w", stdout);
 	freopen_s(&fp, "CONOUT$", "w", stderr);
 #endif
+
+	// *** NOCD CRACK ***
 
     if (MH_Initialize() != MH_OK)
         std::cout << "Failed to initialize MinHook" << std::endl;
@@ -115,14 +139,51 @@ VOID InstallHooks()
 		std::cout << "Failed to create hook for GetDriveTypeA" << std::endl;
 
 	MH_EnableHook(MH_ALL_HOOKS);
+
+	// *** CHECKSUM PATCHES ***
+
+	NopChecksumCheck(reinterpret_cast<BYTE*>(0x00478212), 3); // WinMain
+	std::cout << "Patched checksum check (WinMain)" << std::endl;
+
+	NopChecksumCheck(reinterpret_cast<BYTE*>(0x00479916), 3); // TimerFunc
+	std::cout << "Patched checksum check (TimerFunc)" << std::endl;
+	
+	NopChecksumCheck(reinterpret_cast<BYTE*>(0x0043872B), 3); // Right before upgrading the base
+	std::cout << "Patched checksum check (Base Upgrade)" << std::endl;
+
+	// *** PATCH UPGRADE BASE ***
+
+	//// Invert the condition for upgrading the base, IDK what the condition is but it works
+	//BYTE* pAddress = reinterpret_cast<BYTE*>(0x004386A8);
+	//if (pAddress)
+	//{
+	//	DWORD oldProtect;
+	//	VirtualProtect(pAddress, 1, PAGE_EXECUTE_READWRITE, &oldProtect);
+	//	*pAddress = 0x74; // JZ
+	//	VirtualProtect(pAddress, 1, oldProtect, &oldProtect);
+	//	std::cout << "Patched upgrade base condition" << std::endl;
+	//}
+
+	// This is the value that is eventually checked in upgrade base function
+	CreateThread(NULL, 0, [](LPVOID) -> DWORD
+		{
+			Sleep(5000);
+			BYTE* pLol = reinterpret_cast<BYTE*>(0x0076D160);
+			pLol[0] = 'L';
+			pLol[1] = 'A';
+			pLol[2] = 'Y';
+			pLol[3] = 'L';
+			return 0;
+		}, NULL, 0, NULL);
 }
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved)
 {
     switch (ul_reason_for_call)
     {
+
     case DLL_PROCESS_ATTACH:
-		InstallHooks();
+		ApplyPatches();
     case DLL_THREAD_ATTACH:
     case DLL_THREAD_DETACH:
     case DLL_PROCESS_DETACH:
