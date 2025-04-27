@@ -51,27 +51,23 @@ BOOL WINAPI GetVolumeInformationA_hk(
         nFileSystemNameSize
     );
 
-    std::cout << "GetVolumeInformationA("
-		<< "lpRootPathName: " << lpRootPathName
-        << ", lpVolumeNameBuffer : " << lpVolumeNameBuffer
-        << ", nVolumeNameSize : " << nVolumeNameSize
-        << ", lpVolumeSerialNumber : " << lpVolumeSerialNumber
-        << ", lpMaximumComponentLength : " << lpMaximumComponentLength
-        << ", lpFileSystemFlags : " << lpFileSystemFlags
-        << ", lpFileSystemNameBuffer : " << lpFileSystemNameBuffer
-        << ", nFileSystemNameSize : " << nFileSystemNameSize
-		<< ") -> " << result << std::endl;
+	std::cout << "GetVolumeInformationA(...) -> " << result << std::endl;
+	std::cout << "  lpRootPathName: " << lpRootPathName << std::endl;
+
 
 	if (strcmp(lpRootPathName, "_:\\") == 0)
 	{
-		std::cout << "Spoofing CD properties" << std::endl;
-
 		// Spoof the volume name and file system name, the russian version for some reason only checks this.
         // It will eventually try to read _:\\cd.key but since it never(?) does anything with the result it wont matter whether it exists or not.
 		if (lpVolumeNameBuffer && nVolumeNameSize > 0)
 			strncpy_s(lpVolumeNameBuffer, nVolumeNameSize, "ROCKRAIDERS", nVolumeNameSize - 1);
 		if (lpFileSystemNameBuffer && nFileSystemNameSize > 0)
 			strncpy_s(lpFileSystemNameBuffer, nFileSystemNameSize, "CDFS", nFileSystemNameSize - 1);
+
+		std::cout << "  lpVolumeNameBuffer: " << (lpVolumeNameBuffer ? lpVolumeNameBuffer : "NULL") << std::endl;
+		std::cout << "  lpFileSystemNameBuffer: " << (lpFileSystemNameBuffer ? lpFileSystemNameBuffer : "NULL") << std::endl;
+
+		std::cout << "Spoofed CD volume information" << std::endl;
 	}
 
     return result;
@@ -80,7 +76,7 @@ BOOL WINAPI GetVolumeInformationA_hk(
 BOOL WINAPI GetDriveTypeA_hk(LPCSTR lpRootPathName)
 {
 	BOOL result = g_OriginalGetDriveTypeA(lpRootPathName);
-	std::cout << "GetDriveTypeA(" << lpRootPathName << ") -> " << result << std::endl;
+	std::cout << "GetDriveTypeA(\"" << lpRootPathName << "\") -> " << result << std::endl;
         
     // The game will eventually call this but it can't ever exist, so we'll just use this
 	if (strcmp(lpRootPathName, "_:\\") == 0)
