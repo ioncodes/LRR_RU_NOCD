@@ -23,5 +23,9 @@ layle@pwn:/mnt/c/Program Files (x86)/LEGO Media/Games/Rock Raiders$ sha256sum d3
 5932f4728c5220ff5e2e5c32573f7033e351005c4fe81a42a20b5025003cba7b  d3drm_ori.dll
 ```
 
+## Screenshot
+![image](https://github.com/user-attachments/assets/5e789a35-d98d-4d52-a258-c0699e65050d)
+
+
 ## Random Note
 The game hates it if you change anything in the .text section(?). Use hardware breakpoints.
