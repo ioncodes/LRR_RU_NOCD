@@ -54,10 +54,9 @@ BOOL WINAPI GetVolumeInformationA_hk(
 	std::cout << "GetVolumeInformationA(...) -> " << result << std::endl;
 	std::cout << "  lpRootPathName: " << lpRootPathName << std::endl;
 
-	if (strcmp(lpRootPathName, "_:\\") == 0)
+	if (strcmp(lpRootPathName, "C:\\") == 0)
 	{
 		// Spoof the volume name and file system name, the russian version for some reason only checks this.
-        // It will eventually try to read _:\\cd.key but since it never(?) does anything with the result it wont matter whether it exists or not.
 		if (lpVolumeNameBuffer && nVolumeNameSize > 0)
 			strncpy_s(lpVolumeNameBuffer, nVolumeNameSize, "ROCKRAIDERS", nVolumeNameSize - 1);
 		if (lpFileSystemNameBuffer && nFileSystemNameSize > 0)
@@ -72,17 +71,18 @@ BOOL WINAPI GetVolumeInformationA_hk(
     return result;
 }
 
-BOOL WINAPI GetDriveTypeA_hk(LPCSTR lpRootPathName)
+UINT WINAPI GetDriveTypeA_hk(LPCSTR lpRootPathName)
 {
-	BOOL result = g_OriginalGetDriveTypeA(lpRootPathName);
-	std::cout << "GetDriveTypeA(\"" << lpRootPathName << "\") -> " << result << std::endl;
+	UINT result = g_OriginalGetDriveTypeA(lpRootPathName);
         
     // The game will eventually call this but it can't ever exist, so we'll just use this
-	if (strcmp(lpRootPathName, "_:\\") == 0)
+	if (strcmp(lpRootPathName, "C:\\") == 0)
 	{
 		std::cout << "Spoofing as CDROM drive" << std::endl;
-		return DRIVE_CDROM;
+		result = DRIVE_CDROM;
 	}
+
+	std::cout << "GetDriveTypeA(\"" << lpRootPathName << "\") -> " << result << std::endl;
 
 	return result;
 }
@@ -107,6 +107,35 @@ VOID NopChecksumCheck(BYTE* pAddress, size_t size)
 	for (size_t i = 0; i < size; ++i)
 		pAddress[i] = 0x90; // NOP
 	VirtualProtect(pAddress, size, oldProtect, &oldProtect);
+}
+
+LONG CALLBACK VectoredHandler(EXCEPTION_POINTERS* ExceptionInfo)
+{
+	static int hitCounter = 0;
+
+	// This exception address occurs anyways, let's just reuse it
+	if (ExceptionInfo->ExceptionRecord->ExceptionAddress == (PVOID)0x0047983A && hitCounter > 5 && hitCounter != 0xFF)
+	{
+		// Write "LAYL" to the flag, anything non-zero works
+		BYTE* pLol = reinterpret_cast<BYTE*>(0x0076D160);
+		pLol[0] = 'L';
+		pLol[1] = 'A';
+		pLol[2] = 'Y';
+		pLol[3] = 'L';
+
+		hitCounter = 0xFF; // Oracle to not trigger this again
+
+		std::cout << "Patched upgrade base flag" << std::endl;
+	}
+	else if (ExceptionInfo->ExceptionRecord->ExceptionAddress == (PVOID)0x0047983A && hitCounter != 0xFF)
+	{
+		hitCounter++;
+
+		std::cout << "Hit exception " << std::hex << ExceptionInfo->ExceptionRecord->ExceptionAddress << " [" << hitCounter << "]. Waiting..." << std::endl;
+	}
+
+	// There should be another handler available
+	return EXCEPTION_CONTINUE_SEARCH;
 }
 
 VOID ApplyPatches()
@@ -164,17 +193,8 @@ VOID ApplyPatches()
 	//	std::cout << "Patched upgrade base condition" << std::endl;
 	//}
 
-	// This is the value that is eventually checked in upgrade base function
-	CreateThread(NULL, 0, [](LPVOID) -> DWORD
-		{
-			Sleep(5000);
-			BYTE* pLol = reinterpret_cast<BYTE*>(0x0076D160);
-			pLol[0] = 'L';
-			pLol[1] = 'A';
-			pLol[2] = 'Y';
-			pLol[3] = 'L';
-			return 0;
-		}, NULL, 0, NULL);
+    // Add VEH to patch the upgrade base conditional after the init code at 0x004781C3
+    AddVectoredExceptionHandler(1, VectoredHandler);
 }
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved)
