@@ -11,7 +11,7 @@ It's fairly simple really! The game goes through the following steps:
 2. Check the drive's type (it expects DRIVE_CDROM, e.g. 5)
 3. Check said drive's properties, specifically the volume name (must be `ROCKRAIDERS`) and the filesystem name (must be `CDFS`)
 
-There is a check for a CD key (using the file `cd.key`) but it looks like that it doesn't do anything with it.
+There is a check for a CD key (using the file `cd.key`) but it looks like it doesn't do anything with it.
 
 ## How does this patch work?
 Since the game uses `d3drm.dll` I decided to implement patches inside of a proxy DLL (this project). The DLL hooks `GetDriveTypeA` and `GetVolumeInformationA` and overwrites the required information to reach the desired result.
