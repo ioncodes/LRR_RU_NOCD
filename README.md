@@ -9,10 +9,10 @@ Apparently the Russian version of Lego Rock Raiders is slightly different compar
 ## How does CD check work?
 It's fairly simple really! The game goes through the following steps:
 1. Go through a bunch of driver letters
-2. Check the drive's type (it expects DRIVE_CDROM, e.g. 5)
+2. Check the drive's type (it expects `DRIVE_CDROM`, e.g. 5)
 3. Check said drive's properties, specifically the volume name (must be `ROCKRAIDERS`) and the filesystem name (must be `CDFS`)
 4. Periodically and before upgrading the base the game calls into a "legit sounding" function called `ProgressiveDecompress` which actually reads the table of contents of the CD drive and then compares the returned value to something predetermined
-5. Calculate checksum of either LegoRR.exe or DECO_24.DLL, in 5 different locations (such as before upgrading the base) to ensure the game hasn't been tampered with
+5. Calculate checksum of either `LegoRR.exe` or `DECO_24.DLL`, in 5 different locations (such as before upgrading the base) to ensure the game hasn't been tampered with
 
 The DRM looks for a file called `$(DRIVE_LETTER):\Data\cd.key` and passes the drive letter to `ProgressiveDecompress`, but since we're hooking the function in `DECO_24.DLL` to return predetermined values it will never fail, hence, the file is *not* required for successful execution using this NOCD crack.  
 
