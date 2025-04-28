@@ -1,5 +1,5 @@
 # Lego Rock Raiders NOCD Crack (Russian Version)
-Apparently the Russian version of Lego Rock Raiders is slightly different compared to the other versions (see below). I ended up writing this NOCD crack as the group called "Research Realm" that aims to preserve Lego's history needed help with it.
+Apparently the Russian version made by [Noviy Disk](https://kb.rockraidersunited.com/Noviy_Disk) of Lego Rock Raiders is slightly different compared to the other versions (see below). I ended up writing this NOCD crack as the group called "The Research Realm" that aims to preserve Lego's history needed help with it. The current release is considered to be fully functional and allows you the enjoy the game fully. The crack has been tested using the installer files provided by "The Research Realm" and can be found [here](https://lrr.researchrealm.net/).
 
 ## What's the issue with this version?
 1. Apparently a NOCD crack doesn't exist for this version
